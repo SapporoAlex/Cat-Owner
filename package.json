@@ -1,0 +1,12 @@
+{
+  "name": "ccl",
+  "version": "1.0.0",
+  "main": "ccl.js",
+  "scripts": {
+    "test": "echo \"Compiling Crazy Cat Lady"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
