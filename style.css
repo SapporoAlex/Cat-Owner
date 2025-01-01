@@ -3,3 +3,34 @@
     width: 90%;
     height: 60%;
 }
+
+/* Default hidden state for elements */
+.hidden {
+    display: none;
+}
+
+/* Visible state for elements */
+.visible {
+    display: block;
+}
+
+/* Optional: Styling for specific elements when visible */
+#menu.visible {
+    text-align: center;
+    margin: 20px auto;
+}
+
+#event.visible {
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 80%;
+    margin: 20px auto;
+}
+
+#panel.visible {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px;
+}

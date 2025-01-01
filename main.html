@@ -4,10 +4,43 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crazy Cat Lady</title>
+    <title>Cat Owner</title>
 </head>
 <body>
     <canvas id="crazy-cat-lady-canvas"></canvas>
-    <script src="main2.js"></script>
+
+    <div id="menu" class="hidden">
+        <h1 id="menu-title" class="hidden">Cat Owner</h1>
+        <button id="play" class="hidden">Play</button>
+        <button id="how-to" class="hidden">How to Play</button>
+        <p id="how-to-popup" class="hidden">Cat Owner is a game where you... own cats. Will you focus all your love on one, or perhaps try to own as many as you can. Give them food, medicine when needed, and a clean environment. Have fun in this sandbox style cat owner experience.</p>
+        <button id="back" class="hidden">Back</button>
+        <p id="disclaimer" class="hidden">Disclaimer: The maker of Cat Owner does not endose inhumane treatment of animals.</p>  
+        
+        <h1 id="game-over-title" class="hidden">Game Over</h1>
+        <h2 id="stats" class="hidden">Statistics</h2>
+        <p id="days" class="hidden"></p>
+        <p id="oldest-cat" class="hidden"></p>
+        <p id="highest-number-of-cats" class="hidden"></p>
+        <p id="healed-cats" class="hidden"></p>
+        <p id="died-cats" class="hidden"></p>
+        <p id="rating" class="hidden"></p>
+    </div>
+
+    <div id="event" class="hidden">
+        <h1 id="event-title" class="hidden"></h1>
+        <p id="event-desc" class="hidden"></p>
+        <button id="option1" class="hidden"></button>
+        <button id="option1" class="hidden"></button>
+    </div>
+
+    <div id="panel" class="hidden">
+        <button id="addFoodButton" class="hidden">Feed</button>
+        <button id="clean" class="hidden">Clean</button>
+        <button id="adopt" class="hidden">Adopt</button>
+        <button id="quit" class="hidden">Quit</button>
+    </div>
+
+    <script src="main.js"></script>
 </body>
 </html>
