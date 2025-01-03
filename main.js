@@ -1,3 +1,4 @@
+var _a;
 // Canvas setup
 var canvas = document.getElementById("crazy-cat-lady-canvas");
 var ctx = canvas.getContext("2d");
@@ -12,19 +13,18 @@ floor.onload = function () {
 var time = 0; // 24 hr day cycle
 var tensOfMins = 0;
 var mins = 0; // for the mins
-var numberOfCats = 0; // start with zero
-var cats = [];
 var days = 0;
 var updateTimer = 1000;
 var lastUpdate = 0;
 var dayTime = 144000;
 var hourTime = 6000;
+var numberOfCats = 0; // start with zero
+var cats = [];
 var deadCats = 0;
 var highestNumberOfCats = 0;
 var oldestCat = 0;
-var poops = 0;
-var hygiene = 100;
-var medicine = 1;
+var adoptedNumber = 0;
+var bornNumber = 0;
 var catFood = 1;
 var rating = "";
 var males = 0;
@@ -41,6 +41,7 @@ var lastTensOfMinsUpdate = performance.now();
 var lastMinsUpdate = performance.now();
 var lastCatUpdate = performance.now();
 var lastFrameTime = 0;
+var currentCat = null; // Track the currently displayed cat
 var menuElement = document.getElementById("menu");
 var menuTitle = document.getElementById('menu-title');
 var playButton = document.getElementById('play');
@@ -55,59 +56,37 @@ var addFoodButton = document.getElementById("addFoodButton");
 var adoptButton = document.getElementById("adopt");
 var cleanButton = document.getElementById("clean");
 var quitButton = document.getElementById("quit");
-if (playButton) {
-    playButton.addEventListener('click', function () {
-        hideElement('menu');
-        showElement('panel');
-        showElement('addFoodButton');
-        showElement('adopt');
-        showElement('clean');
-        toggleElement('quit');
-        menu = false;
+var gameOverMenu = document.getElementById("game-over-menu");
+var toMenuButton = document.getElementById("to-menu");
+var closeStatsButton = document.getElementById("closeStats");
+var renameButton = document.getElementById("rename");
+var oldestStat = document.getElementById("oldest-cat");
+var highestStat = document.getElementById("highest-number-of-cats");
+var adoptedStat = document.getElementById("adopted-cats");
+var bornStat = document.getElementById("born-cats");
+var diedStat = document.getElementById("died-cats");
+var ratingStat = document.getElementById("rating");
+var statsDiv = document.getElementById('catStats');
+var nameElement = document.getElementById('catName');
+var detailsElement = document.getElementById('catDetails');
+var isDesktop = window.innerWidth > 768;
+var scaleFactor = 1;
+function resizeCanvas(canvas, cats) {
+    var isDesktop = window.innerWidth > 768;
+    var scaleFactor = isDesktop ? 1.3 : 1;
+    canvas.width = 450 * scaleFactor;
+    canvas.height = 450 * scaleFactor;
+    cats.forEach(function (cat) {
+        var scaledx = canvas.width / 450;
+        var scaledy = canvas.height / 450;
+        var scaledxpos = cat.xpos * scaledx;
+        var scaledypos = cat.xpos * scaledy;
+        cat.xpos = scaledxpos;
+        cat.ypos = scaledypos;
     });
 }
-if (quitButton) {
-    quitButton.addEventListener('click', function () {
-        toggleElement('menu');
-        toggleElement('panel');
-        toggleElement('addFoodButton');
-        toggleElement('adopt');
-        toggleElement('clean');
-        toggleElement('quit');
-        menu = true;
-    });
-}
-if (howToButton) {
-    howToButton.addEventListener('click', function () {
-        toggleElement('how-to-popup');
-    });
-}
-if (backButton) {
-    backButton.addEventListener('click', function () {
-        hideElement('how-to-popup');
-        showElement('menu');
-    });
-}
-if (addFoodButton) {
-    addFoodButton.addEventListener('click', function () {
-        bowl.addFood();
-    });
-}
-if (cleanButton) {
-    cleanButton.addEventListener('click', function () {
-        // Loop through the cats array in reverse to avoid skipping elements
-        for (var i = cats.length - 1; i >= 0; i--) {
-            if (cats[i].dead) {
-                cats.splice(i, 1); // Remove the dead cat from the array
-            }
-        }
-    });
-}
-if (adoptButton) {
-    adoptButton.addEventListener('click', function () {
-        addCat();
-    });
-}
+window.addEventListener('resize', function () { return resizeCanvas(canvas, cats); });
+resizeCanvas(canvas, cats); // Initial setup
 function showElement(elementId) {
     var element = document.getElementById(elementId);
     if (element) {
@@ -142,6 +121,101 @@ function toggleElement(elementId) {
         console.error("Element with ID '".concat(elementId, "' not found."));
     }
 }
+if (playButton) {
+    playButton.addEventListener('click', function () {
+        hideElement('menu');
+        showElement('panel');
+        showElement('addFoodButton');
+        showElement('adopt');
+        showElement('clean');
+        showElement('quit');
+    });
+}
+if (quitButton) {
+    quitButton.addEventListener('click', function () {
+        hideElement('panel');
+        hideElement('addFoodButton');
+        hideElement('adopt');
+        hideElement('clean');
+        hideElement('quit');
+        showElement('game-over-menu');
+        showElement("game-over-title");
+        showElement("stats");
+        if (highestStat && highestNumberOfCats) {
+            highestStat.textContent = "Cat High: ".concat(highestNumberOfCats);
+        }
+        showElement("highest-number-of-cats");
+        if (oldestStat && oldestCat) {
+            oldestStat.textContent = "Oldest Cat: ".concat(oldestCat);
+        }
+        showElement("oldest-cat");
+        if (adoptedStat && adoptedNumber) {
+            adoptedStat.textContent = "Cats Adopted: ".concat(adoptedNumber);
+        }
+        showElement("adopted-cats");
+        if (bornStat && bornNumber) {
+            bornStat.textContent = "Cats Born: ".concat(bornNumber);
+        }
+        showElement("born-cats");
+        if (diedStat && deadCats) {
+            diedStat.textContent = "Cats Lost: ".concat(deadCats);
+        }
+        showElement("died-cats");
+        if (ratingStat && rating) {
+            ratingStat.textContent = "Rating: ".concat(rating);
+        }
+        showElement("rating");
+        showElement('to-menu');
+    });
+}
+if (howToButton) {
+    howToButton.addEventListener('click', function () {
+        hideElement('how-to');
+        hideElement('play');
+        showElement('how-to-popup');
+        showElement('back');
+    });
+}
+if (backButton) {
+    backButton.addEventListener('click', function () {
+        hideElement('how-to-popup');
+        hideElement('back');
+        showElement('play');
+        showElement('how-to');
+        showElement('menu');
+    });
+}
+if (toMenuButton) {
+    toMenuButton.addEventListener('click', function () {
+        resetGame();
+        hideElement('game-over-menu');
+        showElement('menu');
+        showElement('how-to');
+        showElement('menu-title');
+        showElement('play');
+        showElement('disclaimer');
+    });
+}
+if (addFoodButton) {
+    addFoodButton.addEventListener('click', function () {
+        bowl.addFood();
+    });
+}
+if (cleanButton) {
+    cleanButton.addEventListener('click', function () {
+        // Loop through the cats array in reverse to avoid skipping elements
+        for (var i = cats.length - 1; i >= 0; i--) {
+            if (cats[i].dead) {
+                cats.splice(i, 1); // Remove the dead cat from the array
+            }
+        }
+    });
+}
+if (adoptButton) {
+    adoptButton.addEventListener('click', function () {
+        addCat();
+    });
+}
 var Bowl = /** @class */ (function () {
     function Bowl() {
         this.currentImageIndex = 1; // Start with bowl1.png
@@ -151,6 +225,8 @@ var Bowl = /** @class */ (function () {
         this.imageBasePath = "assets/img/bowl"; // Base path for images
         this.currentImage = new Image();
         this.updateBowlImage();
+        this.height = 40;
+        this.width = 40;
     }
     Bowl.prototype.addFood = function () {
         if (this.currentImageIndex < this.maxImages) {
@@ -159,7 +235,7 @@ var Bowl = /** @class */ (function () {
             this.updateBowlImage();
         }
         else {
-            console.log("The bowl is full!");
+            console.error("The bowl is full!");
         }
     };
     Bowl.prototype.updateBowlImage = function () {
@@ -176,10 +252,11 @@ var Bowl = /** @class */ (function () {
         };
     };
     Bowl.prototype.drawBowl = function () {
-        // Clear the previous bowl image from the canvas
-        // ctx.clearRect(this.xpos, this.ypos, 40, 40);
-        // Draw the current bowl image on the canvas
-        ctx.drawImage(this.currentImage, this.xpos, this.ypos, 40, 40);
+        var bowlscaledheight = this.height * scaleFactor;
+        var bowlscaledwidth = this.width * scaleFactor;
+        var bowlscaledxpos = this.xpos * scaleFactor;
+        var bowlscaledypos = this.ypos * scaleFactor;
+        ctx.drawImage(this.currentImage, bowlscaledxpos, bowlscaledypos, bowlscaledheight, bowlscaledwidth);
     };
     return Bowl;
 }());
@@ -217,6 +294,10 @@ var Cat = /** @class */ (function () {
         this.frameIndex = 0;
         this.lastFrameTime = 0;
         this.loadImages();
+        this.causeOfDeath = "Caticide";
+        this.height = 40;
+        this.width = 40;
+        Object.assign(this, options);
     }
     Cat.prototype.randomColor = function () {
         var colors = ["white", "black", "brown", "orange", "yellow"];
@@ -295,7 +376,11 @@ var Cat = /** @class */ (function () {
         }
         var image = this.images[this.state][this.frameIndex];
         if (image.complete && image.width > 0) {
-            ctx.drawImage(image, this.xpos, this.ypos, 40, 40);
+            var scaledx = canvas.width / 450;
+            var scaledy = canvas.height / 450;
+            var scaledheight = this.height * scaledx;
+            var scaledwidth = this.width * scaledy;
+            ctx.drawImage(image, this.xpos, this.ypos, scaledheight, scaledwidth);
         }
         // Draw for different states in this order
         // Sick
@@ -311,9 +396,6 @@ var Cat = /** @class */ (function () {
         }
         if (this.dead) {
             this.state = "dead";
-        }
-        if (this.injured) {
-            this.state = "injured";
         }
         if (this.sleeping) {
             this.state = "sleep";
@@ -363,6 +445,12 @@ var Cat = /** @class */ (function () {
             else if (this.direction == 4) { // Stop moving
                 this.state = "stand";
                 // No update needed; cat stays in place
+            }
+            if (this.xpos > canvas.width) {
+                this.xpos = canvas.width - 100;
+            }
+            if (this.ypos > canvas.height) {
+                this.ypos = canvas.height - 100;
             }
         }
         if (this.fighting && !this.dead) {
@@ -472,7 +560,9 @@ var Cat = /** @class */ (function () {
         }
     };
     Cat.prototype.ageCat = function () {
-        this.age++;
+        if (!this.dead) {
+            this.age++;
+        }
     };
     Cat.prototype.agingCat = function () {
         var aging = Math.random() * 20;
@@ -485,7 +575,10 @@ var Cat = /** @class */ (function () {
         if (this.age > 10) {
             this.dead = Math.random() > 0.8;
             if (this.dead) {
+                this.sleeping = false;
+                this.causeOfDeath = "natural causes";
                 numberOfCats--;
+                deadCats++;
             }
         }
     };
@@ -547,6 +640,9 @@ var Cat = /** @class */ (function () {
                 this.sick = true;
                 this.health -= 15;
             }
+            if (this.sick) {
+                this.health -= 10;
+            }
         }
     };
     Cat.prototype.getRecovered = function () {
@@ -575,16 +671,21 @@ var Cat = /** @class */ (function () {
             if (this.pregnancy >= 5) {
                 this.pregnant = false;
                 this.pregnancy = 0;
+                var mumXLoc = this.xpos;
+                var mumYLoc = this.ypos;
                 var randomTimes = Math.floor(Math.random() * 6) + 1;
                 for (var i = 0; i < randomTimes; i++) {
                     var kitten = new Cat({
-                        xpos: this.xpos,
-                        ypos: this.ypos,
+                        xpos: mumXLoc,
+                        ypos: mumYLoc,
                         color: Math.random() > 0.7 ? this.color : this.randomColor(),
                     });
+                    setupCatClickHandler([kitten]);
                     cats.push(kitten);
                     numberOfCats++;
+                    bornNumber++;
                 }
+                alert("".concat(this.name, " gave birth to ").concat(randomTimes, " kittens!"));
             }
         }
     };
@@ -592,7 +693,9 @@ var Cat = /** @class */ (function () {
         if (this.hungry && this.hunger > 50 && !this.dead) {
             this.dead = Math.random() > 0.5 ? true : false;
             if (this.dead) {
+                this.causeOfDeath = "starvation";
                 numberOfCats--;
+                deadCats++;
                 this.resetState();
             }
             this.health -= 10;
@@ -600,6 +703,8 @@ var Cat = /** @class */ (function () {
         if (this.health <= 0 && !this.dead) {
             this.resetState();
             this.dead = true;
+            this.causeOfDeath = "sickness";
+            deadCats++;
             numberOfCats--;
         }
     };
@@ -628,7 +733,7 @@ var Cat = /** @class */ (function () {
     Cat.prototype.eat = function () {
         if (this.hungry && catFood > 0 && this.xpos > canvas.width - 150 && this.ypos < 150) {
             catFood--;
-            bowl.currentImageIndex--;
+            bowl.currentImageIndex = catFood;
             bowl.updateBowlImage();
             this.hunger = 0;
             this.hungry = false;
@@ -642,6 +747,90 @@ var Cat = /** @class */ (function () {
     };
     return Cat;
 }());
+function setupCatClickHandler(cats) {
+    canvas.addEventListener('click', function (event) {
+        var rect = canvas.getBoundingClientRect();
+        var mouseX = event.clientX - rect.left;
+        var mouseY = event.clientY - rect.top;
+        var clickedCat;
+        for (var _i = 0, cats_1 = cats; _i < cats_1.length; _i++) {
+            var cat = cats_1[_i];
+            var scaledx = canvas.width / 450;
+            var scaledy = canvas.height / 450;
+            if (mouseX >= (cat.xpos * scaledx) && mouseX <= (cat.xpos * scaledx) + (cat.width * scaledx) &&
+                mouseY >= (cat.ypos * scaledy) && mouseY <= (cat.ypos * scaledy) + (cat.height * scaledy)) {
+                clickedCat = cat;
+                break; // Exit loop when a match is found
+            }
+        }
+        if (clickedCat) {
+            currentCat = clickedCat; // Save the clicked cat for future operations
+            showCatStats(clickedCat);
+        }
+    });
+}
+if (closeStatsButton) {
+    closeStatsButton.addEventListener('click', function () {
+        hideElement('cat-stats');
+    });
+}
+if (renameButton) {
+    renameButton.addEventListener('click', function () {
+        if (currentCat) {
+            var newName = prompt("Enter a new name for this cat:", currentCat.name);
+            if (newName !== null && newName.trim() !== "") {
+                currentCat.name = newName.trim();
+                updateCatStatsUI(currentCat); // Update the stats UI
+                console.log("Cat renamed to: ".concat(currentCat.name));
+            }
+        }
+        else {
+            console.error("No cat selected for renaming.");
+        }
+    });
+}
+function updateCatStatsUI(cat) {
+    var statsElement = document.getElementById('cat-stats');
+    if (statsElement) {
+        statsElement.querySelector('#catName').textContent = "".concat(cat.name);
+    }
+}
+function showCatStats(cat) {
+    showElement("cat-stats");
+    showElement("catName");
+    // Set the name and details
+    if (nameElement) {
+        nameElement.textContent = cat.name;
+    }
+    if (detailsElement) {
+        detailsElement.innerHTML = "\n<li>Age: ".concat(cat.age, "</li>\n<li>Sex: ").concat(cat.sex, "</li>\n<li>Health: %").concat(cat.health, "</li>\n<li>Energy: %").concat(cat.energy * 10, "</li>\n<li>State: ").concat(cat.state, "</li>\n<h2 style=\"margin-left: -40px; text-align: center;\">Conditions</h2>\n<li>").concat(cat.dead === true ? "Cause of death: " + cat.causeOfDeath : "", "</li>\n<li>").concat(cat.hunger >= 30 ? "hungry" : "", "</li>\n<li>").concat(cat.ateRecently === true ? "ate recently" : "", "</li>\n<li>").concat(cat.stress >= 5 ? "stressed" : "", "</li>\n<li>").concat(cat.energy <= 3 ? "sleepy" : "", "</li>\n<li>").concat(cat.stress <= 2 ? "happy" : "", "</li>\n<li>").concat(cat.sex === "female" ? (cat.pregnant ? "pregnant" : "") : "", "</li>\n        ");
+    }
+    // Show the stats div
+    if (statsDiv) {
+        statsDiv.style.display = 'block';
+    }
+}
+// Close the stats view
+(_a = document.getElementById('closeStats')) === null || _a === void 0 ? void 0 : _a.addEventListener('click', function () {
+    var statsDiv = document.getElementById('cat-stats');
+    hideElement('catStats');
+});
+function resetGame() {
+    numberOfCats = 0;
+    cats = [];
+    deadCats = 0;
+    highestNumberOfCats = 0;
+    oldestCat = 0;
+    adoptedNumber = 0;
+    bornNumber = 0;
+    catFood = 1;
+    rating = "";
+    males = 0;
+    females = 0;
+    bowl.currentImageIndex = 1;
+    bowl.updateBowlImage();
+    bowl.drawBowl();
+}
 function resetMatingCheck() {
     males = 0;
     females = 0;
@@ -650,7 +839,7 @@ function drawFloor() {
     // Clear the canvas (optional, depending on your drawing needs)
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     // Draw the floor image to cover the canvas
-    ctx.drawImage(floor, 0, canvas.height - floor.height, canvas.width, floor.height);
+    ctx.drawImage(floor, 0, 0, canvas.width, canvas.height);
 }
 function checkHighestNo() {
     if (numberOfCats > highestNumberOfCats) {
@@ -688,11 +877,11 @@ function refresh() {
 }
 function drawUI() {
     // Draw time and cat count
-    ctx.font = "14px Arial";
-    ctx.fillStyle = "black";
-    ctx.fillText("Time: ".concat(time, ":").concat(tensOfMins).concat(mins), 70, 15);
-    ctx.fillText("Day: ".concat(days), 150, 15);
-    ctx.fillText("Cats: ".concat(numberOfCats), 10, 15);
+    ctx.font = 'bold 20px "Comic Sans MS", cursive, sans-serif';
+    ctx.fillStyle = "purple";
+    // ctx.fillText(`Time: ${time}:${tensOfMins}${mins}`, 70, 15);
+    // ctx.fillText(`Day: ${days}`, 150, 15);
+    ctx.fillText("Cats: ".concat(numberOfCats), 15, (canvas.height - 15));
 }
 function hourlyUpdate() {
     cats.forEach(function (cat) {
@@ -728,9 +917,13 @@ function dailyUpdate() {
 }
 // Add a new cat
 function addCat() {
-    var newCat = new Cat();
+    var newCat = new Cat({
+        age: Math.floor(Math.random() * 5),
+    });
+    setupCatClickHandler([newCat]);
     cats.push(newCat);
     numberOfCats++;
+    adoptedNumber++;
 }
 function addBowl() {
     bowl = new Bowl();
@@ -753,20 +946,8 @@ function adjustCanvasForDPR(canvas) {
     canvas.style.width = "".concat(logicalWidth, "px");
     canvas.style.height = "".concat(logicalHeight, "px");
 }
-function displayMenu() {
-    showElement("menu");
-    showElement('menu-title');
-    showElement('play');
-    showElement('how-to');
-    showElement('disclaimer');
-}
 function gameLoop(timestamp) {
     var elapsed = timestamp - lastFrameTime; // Time since the last frame
-    if (menu) {
-        displayMenu();
-    }
-    if (gameOver) {
-    }
     // Update and draw all cats
     refresh();
     drawFloor();
@@ -783,9 +964,6 @@ function gameLoop(timestamp) {
     if (timestamp - lastHourUpdate >= 6000) {
         lastHourUpdate = timestamp;
         hourlyUpdate();
-        cats.forEach(function (cat) {
-            console.log("Name: ".concat(cat.name, "\n                Sex: ").concat(cat.sex, "\n                Age: ").concat(cat.age, "\n                State: ").concat(cat.state, "\n                Hunger: ").concat(cat.hunger, "\n                Stress: ").concat(cat.stress, "\n                Energy: ").concat(cat.energy, "\n                Health: ").concat(cat.health, "\n                Sick: ").concat(cat.sick, "\n                Hungry: ").concat(cat.hungry, "\n                Fighting: ").concat(cat.fighting, "\n                Dead: ").concat(cat.dead, "\n                Sleeping: ").concat(cat.sleeping, "\n                Pregnant: ").concat(cat.pregnant, "\n                Pregnancy: ").concat(cat.pregnancy, "\n                food: ").concat(catFood));
-        });
     }
     if (timestamp - lastTimeUpdate >= 6000) {
         time = (time + 1) % 24; // Increment hour

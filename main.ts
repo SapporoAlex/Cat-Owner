@@ -14,20 +14,19 @@ floor.onload = () => {
 let time: number = 0; // 24 hr day cycle
 let tensOfMins: number = 0;
 let mins: number = 0; // for the mins
-let numberOfCats: number = 0; // start with zero
-let cats: Cat[] = [];
 let days: number = 0;
 let updateTimer: number = 1000;
 let lastUpdate: number = 0;
 let dayTime: number = 144000;
 let hourTime: number = 6000;
 
+let numberOfCats: number = 0; // start with zero
+let cats: Cat[] = [];
 let deadCats: number = 0;
 let highestNumberOfCats: number = 0;
 let oldestCat: number = 0;
-let poops: number = 0;
-let hygiene: number = 100;
-let medicine: number = 1;
+let adoptedNumber: number = 0;
+let bornNumber: number = 0;
 let catFood: number = 1;
 let rating: string = "";
 let males: number = 0;
@@ -46,6 +45,7 @@ let lastTensOfMinsUpdate = performance.now();
 let lastMinsUpdate = performance.now();
 let lastCatUpdate = performance.now();
 let lastFrameTime = 0;
+let currentCat: Cat | null = null; // Track the currently displayed cat
 
 const menuElement = document.getElementById("menu");
 const menuTitle = document.getElementById('menu-title');
@@ -54,78 +54,51 @@ const howToButton = document.getElementById('how-to');
 const howToPopup = document.getElementById('how-to-popup');
 const backButton = document.getElementById('back');
 const disclaimer = document.getElementById('disclaimer');
-
 const gameOverTitle = document.getElementById("game-over-title");
-
 const eventElement = document.getElementById("event-title");
-
 const panel = document.getElementById("panel");
 const addFoodButton = document.getElementById("addFoodButton");
 const adoptButton = document.getElementById("adopt");
 const cleanButton = document.getElementById("clean");
 const quitButton = document.getElementById("quit");
+const gameOverMenu = document.getElementById("game-over-menu");
+const toMenuButton = document.getElementById("to-menu");
+const closeStatsButton = document.getElementById("closeStats");
+const renameButton = document.getElementById("rename");
 
+const oldestStat = document.getElementById("oldest-cat");
+const highestStat = document.getElementById("highest-number-of-cats");
+const adoptedStat = document.getElementById("adopted-cats");
+const bornStat = document.getElementById("born-cats");
+const diedStat = document.getElementById("died-cats");
+const ratingStat = document.getElementById("rating");
 
+const statsDiv = document.getElementById('catStats');
+const nameElement = document.getElementById('catName');
+const detailsElement = document.getElementById('catDetails');
 
-if (playButton) {
-    playButton.addEventListener('click', () => {
-        hideElement('menu');
-        showElement('panel');
-        showElement('addFoodButton');
-        showElement('adopt');
-        showElement('clean');
-        toggleElement('quit');
-        menu = false;
-    });
-}
+let isDesktop = window.innerWidth > 768;
+let scaleFactor = 1;
 
-if (quitButton) {
-    quitButton.addEventListener('click', () => {
-        toggleElement('menu');
-        toggleElement('panel');
-        toggleElement('addFoodButton');
-        toggleElement('adopt');
-        toggleElement('clean');
-        toggleElement('quit');
-        menu = true;
+function resizeCanvas(canvas: HTMLCanvasElement, cats: Cat[]): void {
+    let isDesktop = window.innerWidth > 768;
+    let scaleFactor = isDesktop ? 1.3 : 1;
+    canvas.width = 450 * scaleFactor;
+    canvas.height = 450 * scaleFactor;
+    cats.forEach((cat: Cat) => {
+        let scaledx = canvas.width / 450;
+        let scaledy = canvas.height / 450;
+        let scaledxpos = cat.xpos * scaledx;
+        let scaledypos = cat.xpos * scaledy;
+        cat.xpos = scaledxpos;
+        cat.ypos = scaledypos;
     })
 }
 
-if (howToButton) {
-    howToButton.addEventListener('click', () => {
-        toggleElement('how-to-popup');
-    });
-}
+window.addEventListener('resize', () => resizeCanvas(canvas, cats));
+resizeCanvas(canvas, cats); // Initial setup
 
-if (backButton) {
-    backButton.addEventListener('click', () => {
-        hideElement('how-to-popup');
-        showElement('menu');
-    });
-}
 
-if (addFoodButton) {
-    addFoodButton.addEventListener('click', () => {
-        bowl.addFood();
-    });
-}
-
-if (cleanButton) {
-    cleanButton.addEventListener('click', () => {
-        // Loop through the cats array in reverse to avoid skipping elements
-        for (let i = cats.length - 1; i >= 0; i--) {
-            if (cats[i].dead) {
-                cats.splice(i, 1);  // Remove the dead cat from the array
-            }
-        }
-    });
-}
-
-if (adoptButton) {
-    adoptButton.addEventListener('click', () => {
-        addCat();
-    });
-}
 
 function showElement(elementId: string): void {
     const element = document.getElementById(elementId);
@@ -160,9 +133,109 @@ function toggleElement(elementId: string): void {
     }
 }
 
+if (playButton) {
+    playButton.addEventListener('click', () => {
+        hideElement('menu');
+        showElement('panel');
+        showElement('addFoodButton');
+        showElement('adopt');
+        showElement('clean');
+        showElement('quit');
+    });
+}
 
+if (quitButton) {
+    quitButton.addEventListener('click', () => {
+        hideElement('panel');
+        hideElement('addFoodButton');
+        hideElement('adopt');
+        hideElement('clean');
+        hideElement('quit');
 
+        showElement('game-over-menu');
+        showElement("game-over-title");
+        showElement("stats");
+        if (highestStat && highestNumberOfCats) {
+            highestStat.textContent = `Cat High: ${highestNumberOfCats}`;
+        }
+        showElement("highest-number-of-cats");
+        if (oldestStat && oldestCat) {
+            oldestStat.textContent = `Oldest Cat: ${oldestCat}`;
+        }
+        showElement("oldest-cat");
+        if (adoptedStat && adoptedNumber) {
+            adoptedStat.textContent = `Cats Adopted: ${adoptedNumber}`;
+        }
+        showElement("adopted-cats");
+        if (bornStat && bornNumber) {
+            bornStat.textContent = `Cats Born: ${bornNumber}`;
+        }
+        showElement("born-cats");
+        if (diedStat && deadCats) {
+            diedStat.textContent = `Cats Lost: ${deadCats}`;
+        }
+        showElement("died-cats");
+        if (ratingStat && rating) {
+            ratingStat.textContent = `Rating: ${rating}`;
+        }
+        showElement("rating");
+        showElement('to-menu');
+    })
+}
 
+if (howToButton) {
+    howToButton.addEventListener('click', () => {
+        hideElement('how-to');
+        hideElement('play');
+        showElement('how-to-popup');
+        showElement('back');
+    });
+}
+
+if (backButton) {
+    backButton.addEventListener('click', () => {
+        hideElement('how-to-popup');
+        hideElement('back');
+        showElement('play');
+        showElement('how-to');
+        showElement('menu');
+    });
+}
+
+if (toMenuButton) {
+    toMenuButton.addEventListener('click', () => {
+        resetGame();
+        hideElement('game-over-menu');
+        showElement('menu');
+        showElement('how-to');
+        showElement('menu-title');
+        showElement('play');
+        showElement('disclaimer');
+    });
+}
+
+if (addFoodButton) {
+    addFoodButton.addEventListener('click', () => {
+        bowl.addFood();
+    });
+}
+
+if (cleanButton) {
+    cleanButton.addEventListener('click', () => {
+        // Loop through the cats array in reverse to avoid skipping elements
+        for (let i = cats.length - 1; i >= 0; i--) {
+            if (cats[i].dead) {
+                cats.splice(i, 1);  // Remove the dead cat from the array
+            }
+        }
+    });
+}
+
+if (adoptButton) {
+    adoptButton.addEventListener('click', () => {
+        addCat();
+    });
+}
 
 class Bowl {
     currentImageIndex: number;
@@ -171,6 +244,8 @@ class Bowl {
     ypos: number;
     imageBasePath: string;
     currentImage: HTMLImageElement;
+    height: number;
+    width: number;
 
     constructor() {
         this.currentImageIndex = 1; // Start with bowl1.png
@@ -180,6 +255,8 @@ class Bowl {
         this.imageBasePath = "assets/img/bowl"; // Base path for images
         this.currentImage = new Image();
         this.updateBowlImage();
+        this.height = 40;
+        this.width = 40;
     }
 
     addFood() {
@@ -188,7 +265,7 @@ class Bowl {
             catFood++;
             this.updateBowlImage();
         } else {
-            console.log("The bowl is full!");
+            console.error("The bowl is full!");
         }
     }
 
@@ -208,10 +285,11 @@ class Bowl {
     }
 
     drawBowl() {
-        // Clear the previous bowl image from the canvas
-        // ctx.clearRect(this.xpos, this.ypos, 40, 40);
-        // Draw the current bowl image on the canvas
-        ctx.drawImage(this.currentImage, this.xpos, this.ypos, 40, 40);
+        let bowlscaledheight = this.height * scaleFactor;
+        let bowlscaledwidth = this.width * scaleFactor;
+        let bowlscaledxpos = this.xpos * scaleFactor;
+        let bowlscaledypos = this.ypos * scaleFactor;
+        ctx.drawImage(this.currentImage, bowlscaledxpos, bowlscaledypos, bowlscaledheight, bowlscaledwidth);
     }
 }
 
@@ -245,6 +323,9 @@ class Cat {
     images: { [state: string]: HTMLImageElement[] };
     frameIndex: number;
     lastFrameTime: number;
+    causeOfDeath: string;
+    height: number;
+    width: number;
 
     private moveCooldown: number = 2000; // 2 seconds cooldown
     private lastMoveTime: number = 0; // Track the last time the cat moved
@@ -278,6 +359,10 @@ class Cat {
         this.frameIndex = 0;
         this.lastFrameTime = 0;
         this.loadImages();
+        this.causeOfDeath = "Caticide";
+        this.height = 40;
+        this.width = 40;
+        Object.assign(this, options);
     }
 
     randomColor(): string {
@@ -363,7 +448,11 @@ class Cat {
     
         const image = this.images[this.state][this.frameIndex];
         if (image.complete && image.width > 0) {
-            ctx.drawImage(image, this.xpos, this.ypos, 40, 40);
+            let scaledx = canvas.width / 450;
+            let scaledy = canvas.height / 450;
+            let scaledheight = this.height * scaledx;
+            let scaledwidth = this.width * scaledy;
+            ctx.drawImage(image, this.xpos, this.ypos, scaledheight, scaledwidth);
         }
     
         // Draw for different states in this order
@@ -382,10 +471,6 @@ class Cat {
 
         if (this.dead) {
             this.state = "dead";
-        }
-
-        if (this.injured) {
-            this.state = "injured";
         }
 
         if (this.sleeping) {
@@ -429,7 +514,11 @@ class Cat {
             } else if (this.direction == 4) { // Stop moving
                 this.state = "stand";
                 // No update needed; cat stays in place
-            }
+            } if (this.xpos > canvas.width) {
+                this.xpos = canvas.width - 100;
+            } if (this.ypos > canvas.height) {
+                this.ypos = canvas.height - 100;
+            } 
         }
         if (this.fighting && !this.dead) {
             if (this.direction == 0) { // Move left
@@ -466,7 +555,7 @@ class Cat {
                 }
             } else if (this.direction == 4) {
                 this.state = "fighting";
-                }
+            } 
             }
 
         if (this.scared) {
@@ -525,7 +614,9 @@ class Cat {
     }
     
     ageCat(): void {
-        this.age++;
+        if (!this.dead) {
+            this.age++;
+        }
     }
 
     agingCat(): void {
@@ -540,7 +631,10 @@ class Cat {
         if (this.age > 10) {
             this.dead = Math.random() > 0.8;
             if (this.dead) {
+                this.sleeping = false;
+                this.causeOfDeath = "natural causes";
                 numberOfCats--;
+                deadCats++;
             }
         }
     }
@@ -607,6 +701,9 @@ class Cat {
                 this.sick = true;
                 this.health -= 15;
             }
+        if (this.sick) {
+            this.health -= 10;
+        }
         }
     }
 
@@ -639,16 +736,21 @@ class Cat {
             if (this.pregnancy >= 5) {
                 this.pregnant = false;
                 this.pregnancy = 0;
+                const mumXLoc = this.xpos;
+                const mumYLoc = this.ypos;
                 const randomTimes = Math.floor(Math.random() * 6) + 1;
                 for (let i = 0; i < randomTimes; i++) {
                     const kitten = new Cat({
-                        xpos: this.xpos,
-                        ypos: this.ypos,
+                        xpos: mumXLoc,
+                        ypos: mumYLoc,
                         color: Math.random() > 0.7 ? this.color : this.randomColor(),
                     });
+                    setupCatClickHandler([kitten])
                     cats.push(kitten);
                     numberOfCats++;
+                    bornNumber++;
                 }
+                alert(`${this.name} gave birth to ${randomTimes} kittens!`);
             }
         }
     }
@@ -657,15 +759,21 @@ class Cat {
         if (this.hungry && this.hunger > 50 && !this.dead) {
             this.dead = Math.random() > 0.5 ? true : false;
             if (this.dead) {
+                this.causeOfDeath = "starvation";
                 numberOfCats--;
+                deadCats++;
                 this.resetState();
+                
             }
             this.health -= 10;
         }
         if (this.health <= 0 && !this.dead) {
             this.resetState();
             this.dead = true;
+            this.causeOfDeath = "sickness";
+            deadCats++;
             numberOfCats--;
+            
         }
     }
 
@@ -696,7 +804,7 @@ class Cat {
     eat(): void {
         if (this.hungry && catFood > 0 && this.xpos > canvas.width -150 && this.ypos < 150) {
             catFood--;
-            bowl.currentImageIndex--;
+            bowl.currentImageIndex = catFood;
             bowl.updateBowlImage();
             this.hunger = 0;
             this.hungry = false;
@@ -708,14 +816,114 @@ class Cat {
             this.ateRecently = true;
         }
     }
-
-    // testAdd(): void {
-    //     // this.energy -= 1;
-    //     this.health -= 100;
-    //     // this.hunger += 1;
-    // }
 }
 
+function setupCatClickHandler(cats: Cat[]) {
+    canvas.addEventListener('click', (event) => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+
+        let clickedCat: Cat | undefined;
+
+        for (const cat of cats) {
+            let scaledx = canvas.width / 450;
+            let scaledy = canvas.height / 450;
+            if (mouseX >= (cat.xpos * scaledx) && mouseX <= (cat.xpos * scaledx) + (cat.width * scaledx) &&
+                mouseY >= (cat.ypos * scaledy) && mouseY <= (cat.ypos * scaledy) + (cat.height * scaledy) ) {
+                clickedCat = cat;
+                break; // Exit loop when a match is found
+            }
+        }
+        if (clickedCat) {
+            currentCat = clickedCat; // Save the clicked cat for future operations
+            showCatStats(clickedCat);
+        }
+    });
+}
+
+if (closeStatsButton) {
+    closeStatsButton.addEventListener('click', () => {
+        hideElement('cat-stats');
+    });
+}
+
+if (renameButton) {
+    renameButton.addEventListener('click', () => {
+        if (currentCat) {
+            const newName = prompt("Enter a new name for this cat:", currentCat.name);
+            if (newName !== null && newName.trim() !== "") {
+                currentCat.name = newName.trim();
+                updateCatStatsUI(currentCat); // Update the stats UI
+                console.log(`Cat renamed to: ${currentCat.name}`);
+            }
+        } else {
+            console.error("No cat selected for renaming.");
+        }
+    });
+}
+
+function updateCatStatsUI(cat: Cat) {
+    const statsElement = document.getElementById('cat-stats');
+    if (statsElement) {
+        statsElement.querySelector('#catName')!.textContent = `${cat.name}`;
+    }
+}
+
+function showCatStats(cat: Cat) {
+    showElement("cat-stats");
+    showElement("catName");
+
+    // Set the name and details
+    if (nameElement) {
+        nameElement.textContent = cat.name;
+    }
+    if (detailsElement) {
+        detailsElement.innerHTML = `
+<li>Age: ${cat.age}</li>
+<li>Sex: ${cat.sex}</li>
+<li>Health: %${cat.health}</li>
+<li>Energy: %${cat.energy * 10}</li>
+<li>State: ${cat.state}</li>
+<h2 style="margin-left: -40px; text-align: center;">Conditions</h2>
+<li>${cat.dead === true ? "Cause of death: " + cat.causeOfDeath : ""}</li>
+<li>${cat.hunger >= 30 ? "hungry" : ""}</li>
+<li>${cat.ateRecently === true ? "ate recently" : ""}</li>
+<li>${cat.stress >= 5 ? "stressed" : ""}</li>
+<li>${cat.energy <= 3 ? "sleepy" : ""}</li>
+<li>${cat.stress <= 2 ? "happy" : ""}</li>
+<li>${cat.sex === "female" ? (cat.pregnant ? "pregnant" : "") : ""}</li>
+        `;
+    }
+    
+    // Show the stats div
+    if (statsDiv) {
+        statsDiv.style.display = 'block';
+    }
+}
+
+// Close the stats view
+document.getElementById('closeStats')?.addEventListener('click', () => {
+    const statsDiv = document.getElementById('cat-stats') as HTMLDivElement;
+    hideElement('catStats');
+});
+
+function resetGame(): void {
+    numberOfCats = 0;
+    cats = [];
+    deadCats = 0;
+    highestNumberOfCats = 0;
+    oldestCat = 0;
+    adoptedNumber = 0;
+    bornNumber = 0;
+    catFood = 1;
+    rating = "";
+    males = 0;
+    females = 0;
+    bowl.currentImageIndex = 1;
+    bowl.updateBowlImage();
+    bowl.drawBowl();
+}
 
 function resetMatingCheck(): void {
     males = 0;
@@ -727,7 +935,7 @@ function drawFloor(): void {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw the floor image to cover the canvas
-    ctx.drawImage(floor, 0, canvas.height - floor.height, canvas.width, floor.height);
+    ctx.drawImage(floor, 0, 0, canvas.width, canvas.height);
 }
 
 function checkHighestNo(): void {
@@ -767,18 +975,17 @@ function drawCats(): void {
     });
 }
 
-
 function refresh(): void {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
 function drawUI(): void {
     // Draw time and cat count
-    ctx.font = "14px Arial";
-    ctx.fillStyle = "black";
-    ctx.fillText(`Time: ${time}:${tensOfMins}${mins}`, 70, 15);
-    ctx.fillText(`Day: ${days}`, 150, 15);
-    ctx.fillText(`Cats: ${numberOfCats}`, 10, 15);
+    ctx.font = 'bold 20px "Comic Sans MS", cursive, sans-serif';
+    ctx.fillStyle = "purple";
+    // ctx.fillText(`Time: ${time}:${tensOfMins}${mins}`, 70, 15);
+    // ctx.fillText(`Day: ${days}`, 150, 15);
+    ctx.fillText(`Cats: ${numberOfCats}`, 15, (canvas.height - 15));
 }
 
 function hourlyUpdate(): void {
@@ -817,9 +1024,13 @@ function dailyUpdate(): void {
 
 // Add a new cat
 function addCat(): void {
-    const newCat = new Cat();
+    const newCat = new Cat({
+        age: Math.floor(Math.random() * 5),
+    });
+    setupCatClickHandler([newCat])
     cats.push(newCat);
     numberOfCats++;
+    adoptedNumber++;
 }
 
 function addBowl(): void {
@@ -849,25 +1060,8 @@ function adjustCanvasForDPR(canvas: HTMLCanvasElement) {
     canvas.style.height = `${logicalHeight}px`;
 }
 
-function displayMenu(): void {
-    showElement("menu");
-    showElement('menu-title');
-    showElement('play');
-    showElement('how-to');
-    showElement('disclaimer');
-} 
-
 function gameLoop(timestamp: number) {
     const elapsed = timestamp - lastFrameTime; // Time since the last frame
-
-    if (menu) {
-        displayMenu();
-    }
-
-
-    if (gameOver) {
-
-    }
 
     // Update and draw all cats
     refresh();
@@ -887,27 +1081,6 @@ function gameLoop(timestamp: number) {
     if (timestamp - lastHourUpdate >= 6000) {
         lastHourUpdate = timestamp;
         hourlyUpdate();
-        cats.forEach((cat: Cat) => {
-            console.log(
-                `Name: ${cat.name}
-                Sex: ${cat.sex}
-                Age: ${cat.age}
-                State: ${cat.state}
-                Hunger: ${cat.hunger}
-                Stress: ${cat.stress}
-                Energy: ${cat.energy}
-                Health: ${cat.health}
-                Sick: ${cat.sick}
-                Hungry: ${cat.hungry}
-                Fighting: ${cat.fighting}
-                Dead: ${cat.dead}
-                Sleeping: ${cat.sleeping}
-                Pregnant: ${cat.pregnant}
-                Pregnancy: ${cat.pregnancy}
-                food: ${catFood}`
-
-            );
-        });
     }
 
     if (timestamp - lastTimeUpdate >= 6000) {
@@ -934,8 +1107,6 @@ function gameLoop(timestamp: number) {
     }
     // Request the next frame
     requestAnimationFrame(gameLoop);
-
-
 }
 
 addBowl();
