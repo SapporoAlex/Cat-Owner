@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="cat_owner.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cat Owner</title>
+</head>
+<body>
+    <canvas id="crazy-cat-lady-canvas"></canvas>
+
+    <div id="menu" class="visible">
+        <h1 id="menu-title" class="visible">Cat Owner</h1>
+        <button id="play" class="visible">Play</button>
+        <button id="how-to" class="visible">How to Play</button>
+        <p id="how-to-popup" class="hidden">Cat Owner is a game where you... own cats. Will you focus all your love on one, or perhaps try to own as many as you can. Feed them when needed. Have fun in this sandbox style cat owner experience.</p>
+        <button id="back" class="hidden">Back</button>
+        <p id="disclaimer" class="visible">Disclaimer: The maker of Cat Owner does not endose inhumane treatment of animals.</p>  
+    </div>
+
+    <div id="game-over-menu" class="hidden">
+        <h1 id="game-over-title" class="hidden">Game Over</h1>
+        <h2 id="stats" class="hidden">Statistics</h2>
+        <p id="oldest-cat" class="hidden"></p>
+        <p id="highest-number-of-cats" class="hidden"></p>
+        <p id="adopted-cats" class="hidden"></p>
+        <p id="born-cats" class="hidden"></p>
+        <p id="died-cats" class="hidden"></p>
+        <p id="rating" class="hidden"></p>
+        <button id="to-menu" class="hidden">Menu</button>
+    </div>
+
+    <div id="panel" class="hidden">
+        <button id="addFoodButton" class="hidden">Feed</button>
+        <button id="clean" class="hidden">Clean</button>
+        <button id="adopt" class="hidden">Adopt</button>
+        <button id="quit" class="hidden">Quit</button>
+    </div>
+
+    <div id="cat-stats" class="hidden">
+        <h2 id="catName"></h2>
+        <ul id="catDetails"></ul>
+        <button id="closeStats">Close</button>
+        <button id="rename">Rename</button>
+      </div>
+
+    <script src="cat_owner.js"></script>
+</body>
+</html>
