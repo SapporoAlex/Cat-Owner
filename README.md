@@ -11,7 +11,7 @@ Take care of cats in this cat owner sim-like game.
 - A variety of states and conditions cats can enter based on their stats and environment
 - Cat pregnancy where female cats cohabiting with males can become pregnant
 
-- <img src="https://github.com/SapporoAlex/Cat-Owner/blob/main/co.jpg" max-width="500" height="auto">
+<img src="https://github.com/SapporoAlex/Cat-Owner/blob/main/co.jpg" max-width="500" height="auto">
 
 # Accessability
 Responsive design meaning it can be played on a variety of devices.
